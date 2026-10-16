@@ -1,0 +1,10 @@
+# Frontend .dockerignore
+.git
+node_modules
+dist
+vite.config.ts
+tsconfig.json
+tsconfig.node.json
+*.md
+.omp
+.antigravitycli

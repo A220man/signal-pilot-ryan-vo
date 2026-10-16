@@ -1,0 +1,1 @@
+{"compilerOptions":{"lib":["node"],"module":"CommonJS","moduleResolution":"Bundler","allowSyntheticDefaultImports":true,"skipLibCheck":true},"include":["vite.config.ts"]}
