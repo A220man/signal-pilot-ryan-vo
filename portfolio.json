@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "name": "signal-pilot-ryan-vo",
+  "owner": "A220man",
+  "email": "ryandtvo@gmail.com",
+  "domain": "AI/ML developer tools",
+  "workflows": [
+    "Upload documents (text, markdown, JSON) and index them into a BM25 inverted index",
+    "Search indexed content with BM25 ranking and relevance-scored results with context snippets",
+    "View full document content and metadata from search results"
+  ],
+  "auth": "oidc-keycloak-saml-broker",
+  "llm_providers": [
+    "openai-compatible",
+    "anthropic",
+    "gemini",
+    "ollama"
+  ],
+  "summary": "Work in progress: signal-pilot-ryan-vo",
+  "status": "work-in-progress"
+}
