@@ -1,1 +1,177 @@
-{"schema_version":1,"current_feature":"feat-bm25-search-engine","features":[{"id":"feat-backend-core","title":"FastAPI backend with SQLite and document ingestion API","status":"done","acceptance":["FastAPI app factory creates the app","SQLite database initializes with documents and inverted_index tables","POST /api/v1/documents uploads and indexes a document","GET /api/v1/documents/{id} retrieves a document","GET /api/v1/health returns status"],"implementation":["backend/app/main.py","backend/app/core/config.py","backend/app/core/database.py","backend/app/api/documents.py","backend/app/api/health.py","backend/app/models/document.py","backend/app/services/document_service.py","backend/app/services/tokenizer.py"],"tests":["backend/tests/test_api.py","backend/tests/test_document_service.py"]},{"id":"feat-bm25-search-engine","title":"BM25 search engine with inverted index and snippet generation","status":"done","acceptance":["Query terms are tokenized and matched against the inverted index","BM25 scores are computed deterministically","Search returns ranked results with relevance scores","Snippets are generated with query term context","Pagination and offset work correctly","Stats endpoint returns index statistics"],"implementation":["backend/app/services/search_engine.py","backend/app/api/search.py","backend/app/api/stats.py"],"tests":["backend/tests/test_search_engine.py","backend/tests/test_api.py"]},{"id":"feat-document-detail","title":"Document detail retrieval with full content","status":"done","acceptance":["Documents can be retrieved by ID via GET /api/v1/documents/{id}","Full content is returned","404 for missing documents"],"implementation":["backend/app/api/documents.py"],"tests":["backend/tests/test_api.py"]},{"id":"feat-frontend-search-ui","title":"React TypeScript frontend with upload, search, and document detail","status":"done","acceptance":["Vite dev server starts with typed API client","Upload form submits documents to the backend","Search bar accepts queries and displays ranked results with snippets","Clicking a result shows full document detail","Loading, error, and empty states are handled"],"implementation":["frontend/src/main.tsx","frontend/src/App.tsx","frontend/src/api/client.ts","frontend/src/types/index.ts","frontend/src/components/DocumentUploader.tsx","frontend/src/components/SearchBar.tsx","frontend/src/components/SearchResults.tsx","frontend/src/components/DocumentViewer.tsx","frontend/src/pages/Dashboard.tsx","frontend/src/styles.css"],"tests":["frontend/src/__tests__/api.test.ts","frontend/src/__tests__/SearchResults.test.tsx"]},{"id":"feat-packaging","title":"Docker, CI, and project metadata","status":"done","acceptance":["Backend and frontend Dockerfiles build with nonroot users","docker-compose.yaml with persistent volumes and Keycloak","CI workflow tests backend, frontend, and builds Docker images","portfolio.json, README, LICENSE, CHANGELOG, pyproject.toml present"],"implementation":["backend/Dockerfile","frontend/Dockerfile","compose.yaml",".github/workflows/ci.yml","pyproject.toml","portfolio.json","README.md","CHANGELOG.md",".gitignore",".env.example"],"tests":[]},{"id":"feat-auth-oidc","title":"OIDC authentication through Keycloak with roles and SAML brokering","status":"planned","acceptance":["Login redirects to Keycloak with state, nonce, and PKCE","Tokens are validated for signature, issuer, and audience","Viewer, analyst, admin roles enforced on data endpoints","Explicit logout clears session","Tests cover unauthenticated rejection and role denial"],"implementation":[],"tests":[]},{"id":"feat-llm-adapters","title":"LLM provider adapters for opt-in advisory explanations","status":"planned","acceptance":["OpenAI-compatible, Anthropic, Gemini, and Ollama adapters via httpx","Opt-in labeled advisory explanations grounded in records","Bounded timeouts and redacted errors"],"implementation":[],"tests":[]}]}
+{
+  "schema_version": 1,
+  "current_feature": "feat-search-mime-filter",
+  "features": [
+    {
+      "id": "feat-backend-core",
+      "title": "FastAPI backend with SQLite and document ingestion API",
+      "status": "done",
+      "acceptance": [
+        "FastAPI app factory creates the app",
+        "SQLite database initializes with documents and inverted_index tables",
+        "POST /api/v1/documents uploads and indexes a document",
+        "GET /api/v1/documents/{id} retrieves a document",
+        "GET /api/v1/health returns status"
+      ],
+      "implementation": [
+        "backend/app/main.py",
+        "backend/app/core/config.py",
+        "backend/app/core/database.py",
+        "backend/app/api/documents.py",
+        "backend/app/api/health.py",
+        "backend/app/models/document.py",
+        "backend/app/services/document_service.py",
+        "backend/app/services/tokenizer.py"
+      ],
+      "tests": [
+        "backend/tests/test_api.py",
+        "backend/tests/test_document_service.py"
+      ]
+    },
+    {
+      "id": "feat-bm25-search-engine",
+      "title": "BM25 search engine with inverted index and snippet generation",
+      "status": "done",
+      "acceptance": [
+        "Query terms are tokenized and matched against the inverted index",
+        "BM25 scores are computed deterministically",
+        "Search returns ranked results with relevance scores",
+        "Snippets are generated with query term context",
+        "Pagination and offset work correctly",
+        "Stats endpoint returns index statistics"
+      ],
+      "implementation": [
+        "backend/app/services/search_engine.py",
+        "backend/app/api/search.py",
+        "backend/app/api/stats.py"
+      ],
+      "tests": [
+        "backend/tests/test_search_engine.py",
+        "backend/tests/test_api.py"
+      ]
+    },
+    {
+      "id": "feat-document-detail",
+      "title": "Document detail retrieval with full content",
+      "status": "done",
+      "acceptance": [
+        "Documents can be retrieved by ID via GET /api/v1/documents/{id}",
+        "Full content is returned",
+        "404 for missing documents"
+      ],
+      "implementation": [
+        "backend/app/api/documents.py"
+      ],
+      "tests": [
+        "backend/tests/test_api.py"
+      ]
+    },
+    {
+      "id": "feat-frontend-search-ui",
+      "title": "React TypeScript frontend with upload, search, and document detail",
+      "status": "done",
+      "acceptance": [
+        "Vite dev server starts with typed API client",
+        "Upload form submits documents to the backend",
+        "Search bar accepts queries and displays ranked results with snippets",
+        "Clicking a result shows full document detail",
+        "Loading, error, and empty states are handled"
+      ],
+      "implementation": [
+        "frontend/src/main.tsx",
+        "frontend/src/App.tsx",
+        "frontend/src/api/client.ts",
+        "frontend/src/types/index.ts",
+        "frontend/src/components/DocumentUploader.tsx",
+        "frontend/src/components/SearchBar.tsx",
+        "frontend/src/components/SearchResults.tsx",
+        "frontend/src/components/DocumentViewer.tsx",
+        "frontend/src/pages/Dashboard.tsx",
+        "frontend/src/styles.css"
+      ],
+      "tests": [
+        "frontend/src/__tests__/api.test.ts",
+        "frontend/src/__tests__/SearchResults.test.tsx",
+        "frontend/src/__tests__/SearchBar.test.tsx"
+      ]
+    },
+    {
+      "id": "feat-packaging",
+      "title": "Docker, CI, and project metadata",
+      "status": "done",
+      "acceptance": [
+        "Backend and frontend Dockerfiles build with nonroot users",
+        "docker-compose.yaml with persistent volumes and Keycloak",
+        "CI workflow tests backend, frontend, and builds Docker images",
+        "portfolio.json, README, LICENSE, CHANGELOG, pyproject.toml present"
+      ],
+      "implementation": [
+        "backend/Dockerfile",
+        "frontend/Dockerfile",
+        "compose.yaml",
+        ".github/workflows/ci.yml",
+        "pyproject.toml",
+        "portfolio.json",
+        "README.md",
+        "CHANGELOG.md",
+        ".gitignore",
+        ".env.example"
+      ],
+      "tests": []
+    },
+    {
+      "id": "feat-search-mime-filter",
+      "title": "Search filter by MIME type with dropdown UI",
+      "status": "done",
+      "acceptance": [
+        "Search API accepts optional mime_type query parameter",
+        "BM25 search engine filters results by mime_type",
+        "Frontend SearchBar includes MIME type dropdown filter",
+        "Filter works with pagination (limit/offset)",
+        "Applied filters returned in search response metadata"
+      ],
+      "implementation": [
+        "backend/app/services/search_engine.py",
+        "backend/app/services/document_service.py",
+        "backend/app/api/search.py",
+        "backend/app/models/document.py",
+        "frontend/src/api/client.ts",
+        "frontend/src/types/index.ts",
+        "frontend/src/components/SearchBar.tsx",
+        "frontend/src/pages/Dashboard.tsx",
+        "frontend/src/styles.css"
+      ],
+      "tests": [
+        "backend/tests/test_search_engine.py",
+        "backend/tests/test_api.py",
+        "frontend/src/__tests__/SearchBar.test.tsx"
+      ]
+    },
+    {
+      "id": "feat-auth-oidc",
+      "title": "OIDC authentication through Keycloak with roles and SAML brokering",
+      "status": "planned",
+      "acceptance": [
+        "Login redirects to Keycloak with state, nonce, and PKCE",
+        "Tokens are validated for signature, issuer, and audience",
+        "Viewer, analyst, admin roles enforced on data endpoints",
+        "Explicit logout clears session",
+        "Tests cover unauthenticated rejection and role denial"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "feat-llm-adapters",
+      "title": "LLM provider adapters for opt-in advisory explanations",
+      "status": "planned",
+      "acceptance": [
+        "OpenAI-compatible, Anthropic, Gemini, and Ollama adapters via httpx",
+        "Opt-in labeled advisory explanations grounded in records",
+        "Bounded timeouts and redacted errors"
+      ],
+      "implementation": [],
+      "tests": []
+    }
+  ]
+}

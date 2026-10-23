@@ -58,6 +58,7 @@ class SearchResponse(BaseModel):
     offset: int
     limit: int
     results: List[SearchResultItem]
+    applied_filters: dict = {}
 
 
 class HealthResponse(BaseModel):

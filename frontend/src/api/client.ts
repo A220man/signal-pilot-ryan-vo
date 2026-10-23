@@ -53,16 +53,22 @@ export async function searchDocuments(
   query: string,
   limit = 20,
   offset = 0,
+  mimeType?: string,
 ): Promise<SearchResponse> {
   const params = new URLSearchParams({
     query,
     limit: String(limit),
     offset: String(offset),
   });
-  const response = await fetch(`${BASE_URL}/api/v1/search?${params}`, {
-    method: "POST",
-  });
-  return handleResponse<SearchResponse>(response);
+  if (mimeType) {
+    params.set("mime_type", mimeType);
+  }
+  return handleResponse(
+    await fetch(`${BASE_URL}/api/v1/search?${params.toString()}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    })
+  );
 }
 
 /** Retrieve a single document by ID. */

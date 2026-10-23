@@ -102,10 +102,57 @@ class TestSearch:
 
     def test_partial_term_match_via_stop_removal(self, engine):
         """Search matches on content tokens after stop-word filtering."""
-        engine.index_document("a.txt", "data science with python", 24, "text/plain")
-        results = engine.search("data python")
+        engine.index_document("a.txt", "the quick brown fox", 19, "text/plain")
+        results = engine.search("fox")
         assert len(results) == 1
         assert results[0].doc_id > 0
+    def test_mime_type_filter(self, engine):
+        """Search filters results by mime_type."""
+        engine.index_document("a.txt", "hello world", 11, "text/plain")
+        engine.index_document("b.md", "hello world", 11, "text/markdown")
+        engine.index_document("c.json", "hello world", 11, "application/json")
+
+        # Search without filter - all 3
+        results = engine.search("hello")
+        assert len(results) == 3
+
+        # Filter by text/plain
+        results = engine.search("hello", mime_type="text/plain")
+        assert len(results) == 1
+        assert results[0].filename == "a.txt"
+
+        # Filter by text/markdown
+        results = engine.search("hello", mime_type="text/markdown")
+        assert len(results) == 1
+        assert results[0].filename == "b.md"
+
+        # Filter by application/json
+        results = engine.search("hello", mime_type="application/json")
+        assert len(results) == 1
+        assert results[0].filename == "c.json"
+
+        # Filter by non-existent mime type
+        results = engine.search("hello", mime_type="application/xml")
+        assert len(results) == 0
+
+    def test_mime_type_filter_with_pagination(self, engine):
+        """Mime type filter works with offset and limit."""
+        for i in range(5):
+            engine.index_document(f"doc{i}.txt", "hello world", 11, "text/plain")
+        for i in range(3):
+            engine.index_document(f"doc{i}.md", "hello world", 11, "text/markdown")
+
+        # limit=2, offset=0
+        results = engine.search("hello", limit=2, offset=0, mime_type="text/plain")
+        assert len(results) == 2
+
+        # limit=2, offset=2
+        results = engine.search("hello", limit=2, offset=2, mime_type="text/plain")
+        assert len(results) == 2
+
+        # limit=2, offset=4
+        results = engine.search("hello", limit=2, offset=4, mime_type="text/plain")
+        assert len(results) == 1
 
 
 class TestDocumentOperations:

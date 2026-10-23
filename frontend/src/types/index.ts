@@ -43,6 +43,7 @@ export interface SearchResponse {
   offset: number;
   limit: number;
   results: SearchResultItem[];
+  applied_filters: Record<string, string>;
 }
 
 export interface HealthResponse {

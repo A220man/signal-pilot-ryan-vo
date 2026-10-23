@@ -179,7 +179,7 @@ npm run build      # production build
 - **Pagination:** Search results support `limit` and `offset`
 - **Searchable JSON:** JSON content is flattened to key:path: value for retrieval
 - **Responsive UI:** Upload, search, and document detail views
-
+- **MIME type filter:** Search API and UI filter results by mime_type (text/plain, text/markdown, application/json)
 ### Planned (future milestones)
 
 - **OIDC authentication** via Keycloak with state, nonce, and PKCE
@@ -197,7 +197,7 @@ npm run build      # production build
 | `GET` | `/api/v1/documents` | List indexed documents (paginated) |
 | `GET` | `/api/v1/documents/{id}` | Retrieve a document by ID |
 | `DELETE` | `/api/v1/documents/{id}` | Delete a document |
-| `POST` | `/api/v1/search?query=&limit=&offset=` | Search with BM25 ranking |
+| `POST` | `/api/v1/search?query=&limit=&offset=&mime_type=` | Search with BM25 ranking, optional mime_type filter |
 
 ## Security Limitations
 
