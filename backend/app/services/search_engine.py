@@ -78,11 +78,13 @@ class BM25SearchEngine:
         query: str,
         limit: int = 20,
         offset: int = 0,
+        mime_type: Optional[str] = None,
     ) -> List[SearchResult]:
         """Search documents by BM25 ranking for *query*.
 
         Returns a list of SearchResult objects ordered by descending score.
         Handles empty queries, zero documents, and missing terms gracefully.
+        Optionally filters by mime_type.
         """
         tokens = tokenize(query)
         if not tokens:
@@ -118,6 +120,18 @@ class BM25SearchEngine:
                 norm = 1.0 - self.b + self.b * doc_length / avgdl
                 score = idf * (tf * (self.k1 + 1)) / (tf + self.k1 * norm)
                 doc_scores[doc_id] = doc_scores.get(doc_id, 0.0) + score
+
+        # Apply mime_type filter if provided
+        if mime_type is not None:
+            placeholders = ",".join("?" * len(doc_scores)) if doc_scores else "NULL"
+            filtered_ids = set()
+            if doc_scores:
+                rows = self.db.execute(
+                    f"SELECT id FROM documents WHERE id IN ({placeholders}) AND mime_type = ?",
+                    list(doc_scores.keys()) + [mime_type],
+                ).fetchall()
+                filtered_ids = {row["id"] for row in rows}
+                doc_scores = {k: v for k, v in doc_scores.items() if k in filtered_ids}
 
         # Sort by score descending, apply pagination
         ranked = sorted(doc_scores.items(), key=lambda x: x[1], reverse=True)

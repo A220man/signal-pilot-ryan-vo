@@ -63,10 +63,11 @@ class DocumentService:
         query: str,
         limit: int = 20,
         offset: int = 0,
+        mime_type: Optional[str] = None,
     ) -> List[SearchResult]:
         """Search documents with BM25 ranking."""
         limit = min(limit, self.settings.max_search_limit)
-        return self.engine.search(query, limit=limit, offset=offset)
+        return self.engine.search(query, limit=limit, offset=offset, mime_type=mime_type)
 
     def get_document(self, doc_id: int) -> Optional[Dict[str, Any]]:
         """Retrieve a document by ID."""

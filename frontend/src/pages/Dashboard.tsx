@@ -25,14 +25,14 @@ export function Dashboard() {
       .catch((err) => setHealthError(`Health check failed: ${err.message}`));
   }, []);
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = async (query: string, mimeType?: string) => {
     setSearchQuery(query);
     setSearchError(null);
     setIsSearching(true);
     try {
-      const resp = await searchDocuments(query);
-      setSearchResults(resp.results);
-      setSearchTotal(resp.total);
+      const response = await searchDocuments(query, 20, 0, mimeType);
+      setSearchResults(response.results);
+      setSearchTotal(response.total);
     } catch (err) {
       setSearchError(err instanceof Error ? err.message : "Search failed");
       setSearchResults([]);

@@ -226,6 +226,85 @@ class TestSearchAPI:
         data = resp.json()
         assert len(data["results"]) <= 1
 
+    def test_search_mime_type_filter(self, client):
+        """Search filters results by mime_type parameter."""
+        client.post("/api/v1/documents", json={
+            "filename": "a.txt", "content": "hello world", "mime_type": "text/plain"
+        })
+        client.post("/api/v1/documents", json={
+            "filename": "b.md", "content": "hello world", "mime_type": "text/markdown"
+        })
+        client.post("/api/v1/documents", json={
+            "filename": "c.json", "content": "hello world", "mime_type": "application/json"
+        })
+
+        # Search without filter - all 3
+        resp = client.post("/api/v1/search/?query=hello&limit=10")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 3
+        assert len(data["results"]) == 3
+
+        # Filter by text/plain
+        resp = client.post("/api/v1/search/?query=hello&limit=10&mime_type=text/plain")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert len(data["results"]) == 1
+        assert data["results"][0]["filename"] == "a.txt"
+
+        # Filter by text/markdown
+        resp = client.post("/api/v1/search/?query=hello&limit=10&mime_type=text/markdown")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert len(data["results"]) == 1
+        assert data["results"][0]["filename"] == "b.md"
+
+        # Filter by application/json
+        resp = client.post("/api/v1/search/?query=hello&limit=10&mime_type=application/json")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 1
+        assert len(data["results"]) == 1
+        assert data["results"][0]["filename"] == "c.json"
+
+        # Filter by non-existent mime type
+        resp = client.post("/api/v1/search/?query=hello&limit=10&mime_type=application/xml")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total"] == 0
+        assert len(data["results"]) == 0
+
+    def test_search_mime_type_filter_pagination(self, client):
+        """Mime type filter works with pagination."""
+        for i in range(5):
+            client.post("/api/v1/documents", json={
+                "filename": f"doc{i}.txt", "content": "hello world", "mime_type": "text/plain"
+            })
+        for i in range(3):
+            client.post("/api/v1/documents", json={
+                "filename": f"doc{i}.md", "content": "hello world", "mime_type": "text/markdown"
+            })
+
+        # limit=2, offset=0
+        resp = client.post("/api/v1/search/?query=hello&limit=2&offset=0&mime_type=text/plain")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["results"]) == 2
+
+        # limit=2, offset=2
+        resp = client.post("/api/v1/search/?query=hello&limit=2&offset=2&mime_type=text/plain")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["results"]) == 2
+
+        # limit=2, offset=4
+        resp = client.post("/api/v1/search/?query=hello&limit=2&offset=4&mime_type=text/plain")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data["results"]) == 1
+
 class TestStatsAPI:
     def test_stats_empty_index(self, client):
         """Stats endpoint returns zeros on empty index."""

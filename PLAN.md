@@ -4,7 +4,7 @@ Each round completes one feature or repair. Future items are planned, not implem
 
 ## Current round
 
-feat-bm25-search-engine
+feat-search-mime-filter
 
 ## Roadmap
 
@@ -65,7 +65,7 @@ Acceptance:
 
 Implementation: `frontend/src/main.tsx`, `frontend/src/App.tsx`, `frontend/src/api/client.ts`, `frontend/src/types/index.ts`, `frontend/src/components/DocumentUploader.tsx`, `frontend/src/components/SearchBar.tsx`, `frontend/src/components/SearchResults.tsx`, `frontend/src/components/DocumentViewer.tsx`, `frontend/src/pages/Dashboard.tsx`, `frontend/src/styles.css`
 
-Tests: `frontend/src/__tests__/api.test.ts`, `frontend/src/__tests__/SearchResults.test.tsx`
+Tests: `frontend/src/__tests__/api.test.ts`, `frontend/src/__tests__/SearchResults.test.tsx`, `frontend/src/__tests__/SearchBar.test.tsx`
 
 ### feat-packaging — Docker, CI, and project metadata
 
@@ -78,6 +78,21 @@ Acceptance:
 - portfolio.json, README, LICENSE, CHANGELOG, pyproject.toml present
 
 Implementation: `backend/Dockerfile`, `frontend/Dockerfile`, `compose.yaml`, `.github/workflows/ci.yml`, `pyproject.toml`, `portfolio.json`, `README.md`, `CHANGELOG.md`, `.gitignore`, `.env.example`
+
+### feat-search-mime-filter — Search filter by MIME type with dropdown UI
+
+Status: done
+
+Acceptance:
+- Search API accepts optional mime_type query parameter
+- BM25 search engine filters results by mime_type
+- Frontend SearchBar includes MIME type dropdown filter
+- Filter works with pagination (limit/offset)
+- Applied filters returned in search response metadata
+
+Implementation: `backend/app/services/search_engine.py`, `backend/app/services/document_service.py`, `backend/app/api/search.py`, `backend/app/models/document.py`, `frontend/src/api/client.ts`, `frontend/src/types/index.ts`, `frontend/src/components/SearchBar.tsx`, `frontend/src/pages/Dashboard.tsx`, `frontend/src/styles.css`
+
+Tests: `backend/tests/test_search_engine.py`, `backend/tests/test_api.py`, `frontend/src/__tests__/SearchBar.test.tsx`
 
 ### feat-auth-oidc — OIDC authentication through Keycloak with roles and SAML brokering
 
