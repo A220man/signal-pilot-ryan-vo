@@ -31,6 +31,7 @@ describe("SearchResults", () => {
         total={2}
         isLoading={false}
         error={null}
+        appliedFilters={{}}
         onSelect={() => {}}
       />,
     );
@@ -59,6 +60,7 @@ describe("SearchResults", () => {
         total={0}
         isLoading={false}
         error={null}
+        appliedFilters={{}}
         onSelect={() => {}}
       />,
     );
@@ -75,11 +77,28 @@ describe("SearchResults", () => {
         total={2}
         isLoading={false}
         error={null}
+        appliedFilters={{}}
         onSelect={onSelect}
       />,
     );
 
     fireEvent.click(screen.getByText("ml-guide.txt"));
     expect(onSelect).toHaveBeenCalledWith(1);
+  });
+
+  it("displays applied filters when present", () => {
+    const { container } = render(
+      <SearchResults
+        results={mockResults}
+        query="machine"
+        total={2}
+        isLoading={false}
+        error={null}
+        appliedFilters={{ mime_type: "text/plain" }}
+        onSelect={() => {}}
+      />,
+    );
+
+    expect(container.textContent).toContain("Filtered: mime_type=text/plain");
   });
 });
