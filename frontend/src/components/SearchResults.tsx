@@ -6,6 +6,7 @@ interface SearchResultsProps {
   total: number;
   isLoading: boolean;
   error: string | null;
+  appliedFilters: Record<string, string>;
   onSelect: (docId: number) => void;
 }
 
@@ -15,6 +16,7 @@ export function SearchResults({
   total,
   isLoading,
   error,
+  appliedFilters,
   onSelect,
 }: SearchResultsProps) {
   if (isLoading) {
@@ -49,10 +51,18 @@ export function SearchResults({
     );
   }
 
+  const hasFilters = Object.keys(appliedFilters).length > 0;
+
   return (
     <div className="results-list">
       <p className="results-count">
         {total} result{total !== 1 ? "s" : ""} for "{query}"
+        {hasFilters && (
+          <span className="applied-filters">
+            {" "}
+            [Filtered: {Object.entries(appliedFilters).map(([k, v]) => `${k}=${v}`).join(", ")}]
+          </span>
+        )}
       </p>
       {results.map((item) => (
         <div

@@ -312,3 +312,10 @@ h2 {
 .info {
   color: #fbbf24;
 }
+/* Applied filters display */
+.applied-filters {
+  font-size: 0.8rem;
+  color: #fbbf24;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}

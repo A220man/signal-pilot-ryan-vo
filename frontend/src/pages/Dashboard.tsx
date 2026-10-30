@@ -12,6 +12,7 @@ export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [searchTotal, setSearchTotal] = useState(0);
+  const [searchAppliedFilters, setSearchAppliedFilters] = useState<Record<string, string>>({});
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<"idle" | "uploading">("idle");
@@ -32,11 +33,13 @@ export function Dashboard() {
     try {
       const response = await searchDocuments(query, 20, 0, mimeType);
       setSearchResults(response.results);
+      setSearchAppliedFilters(response.applied_filters);
       setSearchTotal(response.total);
     } catch (err) {
       setSearchError(err instanceof Error ? err.message : "Search failed");
       setSearchResults([]);
       setSearchTotal(0);
+      setSearchAppliedFilters({});
     } finally {
       setIsSearching(false);
     }
@@ -93,6 +96,7 @@ export function Dashboard() {
           total={searchTotal}
           isLoading={isSearching}
           error={searchError}
+          appliedFilters={searchAppliedFilters}
           onSelect={setViewerDocId}
         />
       </section>
