@@ -1,8 +1,15 @@
 # Changelog
 
+## 1.3.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.2.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
+
+### Fixed
+- Search mime_type filter: treat empty string as no filter (previously returned zero results)
 
 ## 1.1.0 — work-in-progress checkpoint
 
@@ -43,3 +50,4 @@ All notable changes to Signal Pilot are documented here.
 ### Testing
 - Backend: 2 new search engine tests, 2 new API tests for mime_type filter
 - Frontend: 6 new SearchBar component tests with filter interaction
+
