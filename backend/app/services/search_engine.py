@@ -121,8 +121,8 @@ class BM25SearchEngine:
                 score = idf * (tf * (self.k1 + 1)) / (tf + self.k1 * norm)
                 doc_scores[doc_id] = doc_scores.get(doc_id, 0.0) + score
 
-        # Apply mime_type filter if provided
-        if mime_type is not None:
+        # Apply mime_type filter if provided (non-empty)
+        if mime_type:
             placeholders = ",".join("?" * len(doc_scores)) if doc_scores else "NULL"
             filtered_ids = set()
             if doc_scores:
