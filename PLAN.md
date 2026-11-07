@@ -4,7 +4,7 @@ Each round completes one feature or repair. Future items are planned, not implem
 
 ## Current round
 
-feat-search-mime-filter
+feat-auth-oidc
 
 ## Roadmap
 
@@ -96,7 +96,7 @@ Tests: `backend/tests/test_search_engine.py`, `backend/tests/test_api.py`, `fron
 
 ### feat-auth-oidc — OIDC authentication through Keycloak with roles and SAML brokering
 
-Status: planned
+Status: in_progress
 
 Acceptance:
 - Login redirects to Keycloak with state, nonce, and PKCE
@@ -104,6 +104,10 @@ Acceptance:
 - Viewer, analyst, admin roles enforced on data endpoints
 - Explicit logout clears session
 - Tests cover unauthenticated rejection and role denial
+
+Implementation: `backend/app/services/auth.py`, `backend/app/api/auth.py`, `backend/app/api/documents.py`, `backend/app/api/search.py`, `backend/app/api/stats.py`, `backend/tests/test_auth.py`
+
+Tests: `backend/tests/test_auth.py`, `backend/tests/test_api.py`
 
 ### feat-llm-adapters — LLM provider adapters for opt-in advisory explanations
 

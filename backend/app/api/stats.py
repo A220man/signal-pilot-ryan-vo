@@ -6,6 +6,7 @@ import sqlite3
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from app.api.auth import RequireViewer
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.services.search_engine import BM25SearchEngine
@@ -33,8 +34,11 @@ class IndexStats(BaseModel):
 
 
 @router.get("", response_model=IndexStats)
-def get_stats(engine: BM25SearchEngine = Depends(get_service)) -> IndexStats:
-    """Return index statistics for monitoring and AI/ML evaluation."""
+def get_stats(
+    engine: BM25SearchEngine = Depends(get_service),
+    _user: None = RequireViewer,
+) -> IndexStats:
+    """Return index statistics for monitoring and AI/ML evaluation. Requires viewer role."""
     db = engine.db
 
     doc_stats = db.execute(

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "current_feature": "feat-search-mime-filter",
+  "current_feature": "feat-auth-oidc",
   "features": [
     {
       "id": "feat-backend-core",
@@ -150,7 +150,7 @@
     {
       "id": "feat-auth-oidc",
       "title": "OIDC authentication through Keycloak with roles and SAML brokering",
-      "status": "planned",
+      "status": "in_progress",
       "acceptance": [
         "Login redirects to Keycloak with state, nonce, and PKCE",
         "Tokens are validated for signature, issuer, and audience",
@@ -158,8 +158,18 @@
         "Explicit logout clears session",
         "Tests cover unauthenticated rejection and role denial"
       ],
-      "implementation": [],
-      "tests": []
+      "implementation": [
+        "backend/app/services/auth.py",
+        "backend/app/api/auth.py",
+        "backend/app/api/documents.py",
+        "backend/app/api/search.py",
+        "backend/app/api/stats.py",
+        "backend/tests/test_auth.py"
+      ],
+      "tests": [
+        "backend/tests/test_auth.py",
+        "backend/tests/test_api.py"
+      ]
     },
     {
       "id": "feat-llm-adapters",
