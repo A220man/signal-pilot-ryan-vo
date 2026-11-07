@@ -5,10 +5,12 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends
 
+from app.api.auth import RequireViewer
 from app.core.config import Settings, get_settings
 from app.core.database import get_db
 from app.models.document import SearchResponse
 from app.services.document_service import DocumentService
+
 router = APIRouter()
 
 
@@ -30,8 +32,9 @@ def search(
     offset: int = 0,
     mime_type: Optional[str] = None,
     service: DocumentService = Depends(get_service),
+    _user: None = RequireViewer,
 ) -> SearchResponse:
-    """Search indexed documents with BM25 ranking.
+    """Search indexed documents with BM25 ranking. Requires viewer role.
 
     The query is tokenized and matched against the inverted index.
     Results are ranked by BM25 relevance score (descending).

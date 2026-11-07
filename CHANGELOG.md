@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.4.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
+## 1.4.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
+### Added
+- OIDC authentication service with Keycloak JWT validation (RS256)
+- Role-based access control: viewer, analyst, admin (hierarchy: admin > analyst > viewer)
+- FastAPI dependencies for role enforcement on API endpoints
+- Demo mode bypass for local development (no auth required)
+- TokenClaims dataclass with user info and extracted roles
+- JWKS caching with 1-hour TTL for Keycloak public keys
+- Authentication tests: 9 new tests covering service and dependencies
+
+### Testing
+- Backend: 9 new auth tests (service validation, role hierarchy, dependencies)
+- Total backend tests: 86 (was 77)
+- Frontend tests unchanged: 19
+
 ## 1.3.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
@@ -50,4 +72,3 @@ All notable changes to Signal Pilot are documented here.
 ### Testing
 - Backend: 2 new search engine tests, 2 new API tests for mime_type filter
 - Frontend: 6 new SearchBar component tests with filter interaction
-
