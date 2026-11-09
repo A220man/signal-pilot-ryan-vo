@@ -1,9 +1,14 @@
 """OIDC authentication service: JWT validation, role extraction, Keycloak integration."""
 from __future__ import annotations
 
+import base64
+import hashlib
+import os
+import secrets
 import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlencode
 
 import httpx
 from jose import jwt, JWTError
@@ -27,6 +32,15 @@ class TokenClaims:
     aud: List[str]
 
 
+@dataclass
+class AuthSession:
+    """OIDC auth session state for PKCE flow."""
+    state: str
+    nonce: str
+    code_verifier: str
+    created_at: float
+
+
 class OIDCAuthService:
     """Validates OIDC tokens from Keycloak and extracts user roles."""
 
@@ -35,6 +49,115 @@ class OIDCAuthService:
         self._jwks_cache: Optional[Dict[str, Any]] = None
         self._jwks_fetched_at: float = 0
         self._jwks_ttl = 3600  # 1 hour cache TTL
+        # In-memory session store for PKCE flow (use Redis in production)
+        self._sessions: Dict[str, AuthSession] = {}
+        self._session_ttl = 600  # 10 minutes
+
+    def _generate_state(self) -> str:
+        """Generate cryptographically secure state parameter."""
+        return secrets.token_urlsafe(32)
+
+    def _generate_nonce(self) -> str:
+        """Generate cryptographically secure nonce parameter."""
+        return secrets.token_urlsafe(32)
+
+    def _generate_code_verifier(self) -> str:
+        """Generate PKCE code_verifier (43-128 chars)."""
+        return secrets.token_urlsafe(96)  # 128 chars base64url
+
+    def _generate_code_challenge(self, code_verifier: str) -> str:
+        """Generate PKCE code_challenge using S256 method."""
+        digest = hashlib.sha256(code_verifier.encode()).digest()
+        return base64.urlsafe_b64encode(digest).decode().rstrip("=")
+
+    def create_auth_session(self) -> AuthSession:
+        """Create a new auth session with PKCE parameters."""
+        state = self._generate_state()
+        nonce = self._generate_nonce()
+        code_verifier = self._generate_code_verifier()
+        session = AuthSession(
+            state=state,
+            nonce=nonce,
+            code_verifier=code_verifier,
+            created_at=time.time(),
+        )
+        self._sessions[state] = session
+        self._cleanup_sessions()
+        return session
+
+    def _cleanup_sessions(self) -> None:
+        """Remove expired sessions."""
+        now = time.time()
+        expired = [s for s, sess in self._sessions.items() if now - sess.created_at > self._session_ttl]
+        for s in expired:
+            del self._sessions[s]
+
+    def get_and_consume_session(self, state: str) -> Optional[AuthSession]:
+        """Retrieve and remove session by state (one-time use)."""
+        self._cleanup_sessions()
+        session = self._sessions.pop(state, None)
+        if session and time.time() - session.created_at > self._session_ttl:
+            return None
+        return session
+
+    def build_login_url(self, session: AuthSession) -> str:
+        """Build the Keycloak authorization URL with PKCE parameters."""
+        if not self.settings.keycloak_server_url or not self.settings.keycloak_realm or not self.settings.keycloak_client_id:
+            raise RuntimeError("Keycloak OIDC not fully configured")
+
+        base_url = f"{self.settings.keycloak_server_url.rstrip('/')}/realms/{self.settings.keycloak_realm}/protocol/openid-connect/auth"
+
+        params = {
+            "client_id": self.settings.keycloak_client_id,
+            "redirect_uri": self.settings.keycloak_redirect_uri,
+            "response_type": "code",
+            "scope": "openid email profile",
+            "state": session.state,
+            "nonce": session.nonce,
+            "code_challenge": self._generate_code_challenge(session.code_verifier),
+            "code_challenge_method": "S256",
+        }
+
+        return f"{base_url}?{urlencode(params)}"
+
+    async def exchange_code_for_tokens(self, code: str, code_verifier: str) -> Dict[str, Any]:
+        """Exchange authorization code for tokens at Keycloak token endpoint."""
+        if not self.settings.keycloak_server_url or not self.settings.keycloak_realm or not self.settings.keycloak_client_id:
+            raise RuntimeError("Keycloak OIDC not fully configured")
+
+        token_url = f"{self.settings.keycloak_server_url.rstrip('/')}/realms/{self.settings.keycloak_realm}/protocol/openid-connect/token"
+
+        data = {
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": self.settings.keycloak_redirect_uri,
+            "client_id": self.settings.keycloak_client_id,
+            "code_verifier": code_verifier,
+        }
+
+        # Add client secret if not a public client
+        if not self.settings.keycloak_public_client and self.settings.keycloak_client_secret:
+            data["client_secret"] = self.settings.keycloak_client_secret
+
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(token_url, data=data)
+            response.raise_for_status()
+            return response.json()
+
+    def build_logout_url(self, id_token: Optional[str] = None) -> str:
+        """Build Keycloak logout URL."""
+        if not self.settings.keycloak_server_url or not self.settings.keycloak_realm:
+            raise RuntimeError("Keycloak OIDC not configured")
+
+        base_url = f"{self.settings.keycloak_server_url.rstrip('/')}/realms/{self.settings.keycloak_realm}/protocol/openid-connect/logout"
+
+        params = {}
+        if self.settings.keycloak_redirect_uri:
+            params["post_logout_redirect_uri"] = self.settings.keycloak_redirect_uri
+        if id_token:
+            params["id_token_hint"] = id_token
+
+        return f"{base_url}?{urlencode(params)}" if params else base_url
 
     async def _fetch_jwks(self) -> Dict[str, Any]:
         """Fetch JWKS from Keycloak OIDC discovery endpoint."""
@@ -161,12 +284,17 @@ class Roles:
     ANALYST = "analyst"
     ADMIN = "admin"
 
-    # Hierarchy: admin > analyst > viewer
-    HIERARCHY = {VIEWER: 1, ANALYST: 2, ADMIN: 3}
+    _HIERARCHY = {
+        VIEWER: 1,
+        ANALYST: 2,
+        ADMIN: 3,
+    }
 
     @classmethod
-    def satisfies(cls, user_roles: List[str], required: str) -> bool:
-        """Check if user roles satisfy the required role (hierarchy-aware)."""
-        user_max = max((cls.HIERARCHY.get(r, 0) for r in user_roles), default=0)
-        required_level = cls.HIERARCHY.get(required, 0)
+    def satisfies(cls, user_roles: List[str], required_role: str) -> bool:
+        """Check if user roles satisfy required role (hierarchy-aware)."""
+        if not user_roles:
+            return False
+        required_level = cls._HIERARCHY.get(required_role, 0)
+        user_max = max(cls._HIERARCHY.get(r, 0) for r in user_roles)
         return user_max >= required_level
