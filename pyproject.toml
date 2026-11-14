@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "signal-pilot"
-version = "1.0.0"
+version = "1.6.0"
 description = "Token-efficient BM25 search engine for AI agents and RAG pipelines"
 authors = [{name = "Ryan Vo", email = "ryandtvo@gmail.com"}]
 license = {text = "MIT"}
