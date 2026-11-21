@@ -7,8 +7,8 @@ import pytest
 from jose import jwt
 
 from app.api.auth import get_current_user, require_role
-from app.services.auth import OIDCAuthService, Roles, TokenClaims
 from app.core.config import Settings
+from app.services.auth import OIDCAuthService, AuthSession, Roles, TokenClaims
 
 
 class TestOIDCAuthService:
@@ -110,6 +110,74 @@ class TestOIDCAuthService:
         assert Roles.satisfies(["viewer"], "viewer")
         assert not Roles.satisfies(["viewer"], "analyst")
         assert not Roles.satisfies([], "viewer")
+
+    @pytest.mark.asyncio
+    async def test_callback_exchange_code(self, auth_service):
+        """Test that callback endpoint exchanges code for tokens.
+        
+        Verifies that the callback extracts code and state from query params,
+        retrieves the auth session by state (one-time use), and exchanges
+        the code for tokens using PKCE code_verifier.
+        """
+        mock_jwks = {
+            "keys": [{
+                "kty": "RSA",
+                "kid": "test-key-id",
+                "n": "test-modulus",
+                "e": "AQAB",
+            }]
+        }
+        
+        payload = {
+            "sub": "user-123",
+            "preferred_username": "testuser",
+            "email": "test@example.com",
+            "realm_access": {"roles": ["viewer", "analyst"]},
+            "resource_access": {
+                "test-client": {"roles": ["admin"]}
+            },
+            "exp": 9999999999,
+            "iat": 1000000000,
+            "iss": "https://keycloak.example.com/realms/test-realm",
+            "aud": ["test-client"],
+        }
+        
+        mock_token_response = {
+            "access_token": "fake-access-token",
+            "expires_in": 3600,
+            "token_type": "Bearer",
+            "refresh_token": "fake-refresh-token",
+            "id_token": "fake-id-token",
+        }
+        
+        mock_session = AuthSession(
+            state="test-state-123",
+            nonce="test-nonce-456",
+            code_verifier="test-code-verifier-789",
+            created_at=1795272000.0,
+        )
+        
+        with patch.object(auth_service, "_fetch_jwks", AsyncMock(return_value=mock_jwks)):
+            with patch("app.services.auth.jwt.get_unverified_header", return_value={"kid": "test-key-id"}):
+                with patch("app.services.auth.jwt.decode", return_value=payload):
+                    with patch.object(auth_service, "_cleanup_sessions") as mock_cleanup:
+                        mock_cleanup.return_value = None
+                        with patch.object(auth_service, "_sessions", {mock_session.state: mock_session}):
+                            with patch.object(auth_service, "get_and_consume_session", return_value=mock_session):
+                                with patch.object(auth_service, "exchange_code_for_tokens", AsyncMock(return_value=mock_token_response)):
+                                    from fastapi.testclient import TestClient
+                                    from app.main import app
+                                    
+                                    client = TestClient(app)
+                                    response = client.get(
+                                        "/api/v1/auth/callback",
+                                        params={"code": "auth-code-123", "state": "test-state-123"},
+                                    )
+                                    
+                                    assert response.status_code == 200
+                                    data = response.json()
+                                    assert data["detail"] == "Callback successful"
+                                    assert "token_response" in data
 
 
 class TestAuthDependencies:
