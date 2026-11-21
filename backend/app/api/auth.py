@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Annotated, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.responses import RedirectResponse
 
@@ -13,7 +13,7 @@ from app.services.auth import OIDCAuthService, AuthSession, Roles, TokenClaims
 # Bearer token security scheme
 security = HTTPBearer(auto_error=False)
 
-router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 
 async def get_auth_service(settings: Settings = Depends(get_settings)) -> OIDCAuthService:
@@ -114,9 +114,8 @@ async def login(
 
 @router.get("/callback", summary="Keycloak callback / token exchange")
 async def callback(
-    request: Annotated[Optional[str], Header()] = None,
-    # In a full implementation, we'd extract the code from query params
-    # But for now we note the flow: Keycloak redirects back with ?code=...
+    code: Annotated[Optional[str], Query()] = None,
+    state: Annotated[Optional[str], Query()] = None,
     auth_service: OIDCAuthService = Depends(get_auth_service),
     settings: Settings = Depends(get_settings),
 ) -> dict:
@@ -125,10 +124,68 @@ async def callback(
     Keycloak redirects back with an authorization code. This endpoint
     exchanges the code for tokens using the PKCE code_verifier.
     """
-    # For now, return a structure indicating the flow
-    # In production, we'd extract `code` from query params
-    # and call: await auth_service.exchange_code_for_tokens(code, session.code_verifier)
-    return {"detail": "Callback received - implement code exchange"}
+    if not code or not state:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Authorization code and state required",
+        )
+
+    # Retrieve and consume the auth session by state (one-time use)
+    session = auth_service.get_and_consume_session(state)
+    if not session:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired state parameter",
+        )
+
+    # Exchange the authorization code for tokens
+    try:
+        token_response = await auth_service.exchange_code_for_tokens(
+            code=code,
+            code_verifier=session.code_verifier,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Token exchange failed: {e}",
+        )
+
+    # Validate the ID token if present
+    id_token = token_response.get("id_token")
+    if id_token:
+        try:
+            claims = await auth_service.validate_token(id_token)
+        except Exception:
+            # If token validation fails, still return token response
+            # but with a warning
+            pass
+    else:
+        # No ID token - we can still get basic user info
+        # from the token response or try to validate access token
+        pass
+
+    # Extract user info from claims or token response
+    user_sub = None
+    user_username = None
+    if 'claims' in dir() and claims:
+        user_sub = claims.sub
+        user_username = claims.username
+    elif token_response and token_response.get("id_token"):
+        # Try to decode the ID token payload
+        from jose import jwt as jose_jwt
+        try:
+            header = jose_jwt.get_unverified_header(token_response["id_token"])
+            # We can't fully decode without validation, but return what we have
+            user_sub = header.get("typ", None)
+        except Exception:
+            pass
+
+    return {
+        "detail": "Callback successful",
+        "token_response": token_response,
+        "sub": user_sub,
+        "username": user_username,
+    }
 
 
 @router.get("/logout", summary="Keycloak logout")

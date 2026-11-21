@@ -15,7 +15,7 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import documents, health, search
+from app.api import documents, health, search, auth
 from app.core.config import get_settings, Settings
 from app.core.database import init_db
 
@@ -59,6 +59,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(documents.router, prefix="/api/v1/documents", tags=["documents"])
     app.include_router(search.router, prefix="/api/v1/search", tags=["search"])
     app.include_router(stats.router, prefix="/api/v1/stats", tags=["stats"])
+    app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 
     # Startup / shutdown hooks
     @app.on_event("startup")
