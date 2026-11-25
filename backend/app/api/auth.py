@@ -124,6 +124,16 @@ async def callback(
     Keycloak redirects back with an authorization code. This endpoint
     exchanges the code for tokens using the PKCE code_verifier.
     """
+    # Demo mode: allow unauthenticated callback for testing
+    if settings.demo_mode:
+        return {"detail": "Callback successful", "token_response": {
+            "access_token": "fake-access-token",
+            "expires_in": 3600,
+            "token_type": "Bearer",
+            "refresh_token": "fake-refresh-token",
+            "id_token": "fake-id-token"
+        }}
+
     if not code or not state:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
