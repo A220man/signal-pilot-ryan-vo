@@ -96,8 +96,6 @@ class OIDCAuthService:
         """Retrieve and remove session by state (one-time use)."""
         self._cleanup_sessions()
         session = self._sessions.pop(state, None)
-        if session and time.time() - session.created_at > self._session_ttl:
-            return None
         return session
 
     def build_login_url(self, session: AuthSession) -> str:
